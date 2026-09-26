@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Reaction Test</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #111;
+            font-family: Arial, sans-serif;
+            color: white;
+        }
+
+        .container {
+            width: min(90vw, 600px);
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+        }
+
+        .info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        /* Arena 1:1 */
+        #game {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            border: 4px solid white;
+            background: #222;
+            overflow: hidden;
+            user-select: none;
+            touch-action: manipulation;
+        }
+
+        /* Titik merah */
+        .dot {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: red;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        button {
+            margin-top: 15px;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            background: white;
+            color: #111;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #ddd;
+        }
+
+        /* Popup */
+        #popup {
+            position: fixed;
+            inset: 0;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.75);
+            z-index: 100;
+        }
+
+        .popup-box {
+            width: min(90%, 400px);
+            padding: 25px;
+            background: white;
+            color: #111;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .popup-box img {
+            width: 100%;
+            max-height: 250px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+
+        .popup-box h2 {
+            margin-top: 0;
+        }
+
+        #result {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Reaction Test</h1>
+
+    <div class="info">
+        <span>
+            Titik: <b><span id="score">0</span>/10</b>
+        </span>
+
+        <span>
+            Waktu: <b><span id="timer">0.00</span>s</b>
+        </span>
+    </div>
+
+    <div id="game"></div>
+
+    <button onclick="startGame()">Mulai Game</button>
+
+</div>
+
+
+<!-- POPUP -->
+<div id="popup">
+
+    <div class="popup-box">
+
+        <h2 id="popupTitle">
+            Selamat, Anda Menang!
+        </h2>
+
+        <img
+            id="popupImage"
+            src="bunga.jpg"
+            alt="Bunga"
+        >
+
+        <p id="result"></p>
+
+        <button onclick="closePopup(); startGame();">
+            Main Lagi
+        </button>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    const game = document.getElementById("game");
+    const scoreText = document.getElementById("score");
+    const timerText = document.getElementById("timer");
+
+    const popup = document.getElementById("popup");
+    const popupTitle = document.getElementById("popupTitle");
+    const popupImage = document.getElementById("popupImage");
+    const resultText = document.getElementById("result");
+
+    let score = 0;
+    let startTime = 0;
+    let timerInterval = null;
+
+    const TOTAL_DOTS = 10;
+    const TARGET_TIME = 10;
+
+
+    function startGame() {
+
+        score = 0;
+
+        scoreText.textContent = score;
+        timerText.textContent = "0.00";
+
+        game.innerHTML = "";
+
+        closePopup();
+
+        startTime = performance.now();
+
+        timerInterval = setInterval(updateTimer, 10);
+
+        createDot();
+    }
+
+
+    function updateTimer() {
+
+        const currentTime = performance.now();
+
+        const elapsed =
+            (currentTime - startTime) / 1000;
+
+        timerText.textContent =
+            elapsed.toFixed(2);
+    }
+
+
+    function createDot() {
+
+        const dot = document.createElement("div");
+
+        dot.classList.add("dot");
+
+        /*
+            Posisi random 10% - 90%.
+            Area ini dibuat lebih aman supaya
+            dot 60px tidak terlalu dekat dengan border.
+        */
+
+        const x = Math.random() * 80 + 10;
+        const y = Math.random() * 80 + 10;
+
+        dot.style.left = x + "%";
+        dot.style.top = y + "%";
+
+        dot.addEventListener("pointerdown", hitDot);
+
+        game.appendChild(dot);
+    }
+
+
+    function hitDot(event) {
+
+        event.preventDefault();
+
+        event.target.remove();
+
+        score++;
+
+        scoreText.textContent = score;
+
+        if (score >= TOTAL_DOTS) {
+
+            finishGame();
+
+        } else {
+
+            createDot();
+
+        }
+    }
+
+
+    function finishGame() {
+
+        clearInterval(timerInterval);
+
+        const finalTime =
+            (performance.now() - startTime) / 1000;
+
+        timerText.textContent =
+            finalTime.toFixed(2);
+
+        game.innerHTML = "";
+
+        if (finalTime < TARGET_TIME) {
+
+            popupTitle.textContent =
+                "Selamat, Anda Menang!";
+
+            popupImage.src =
+                "bunga.jpg";
+
+            resultText.textContent =
+                `Anda berhasil menyentuh 10 titik dalam ${finalTime.toFixed(2)} detik.`;
+
+        } else {
+
+            popupTitle.textContent =
+                "Permainan Selesai";
+
+            popupImage.src =
+                "bunga.jpg";
+
+            resultText.textContent =
+                `10 titik selesai dalam ${finalTime.toFixed(2)} detik. Targetnya kurang dari ${TARGET_TIME} detik.`;
+        }
+
+        popup.style.display = "flex";
+    }
+
+
+    function closePopup() {
+
+        popup.style.display = "none";
+    }
+
+</script>
+
+</body>
+</html>
